@@ -1,0 +1,114 @@
+{
+  "checked_date": "2026-10-27",
+  "regression_tests": {
+    "count": 30,
+    "result": "passed"
+  },
+  "main_notebook": {
+    "python": "3.12.13 (main, Mar 24 2026, 22:57:53) [MSC v.1944 64 bit (AMD64)]",
+    "mode": "md",
+    "elapsed_s": 87.53275860000576,
+    "executed_code_cells": 17,
+    "png_figures": 6,
+    "animations": 1,
+    "errors": 0,
+    "frame_checks": "{\"frame_counts\": [3, 1], \"displayed_chains\": 2, \"mean_count\": 2.0, \"fine_shape\": [512, 512], \"model_shape\": [256, 256], \"pathway\": \"md\"}"
+  },
+  "alternative_notebook": {
+    "python": "3.12.13 (main, Mar 24 2026, 22:57:53) [MSC v.1944 64 bit (AMD64)]",
+    "mode": "nonmd",
+    "elapsed_s": 11.678650899993954,
+    "executed_code_cells": 17,
+    "png_figures": 7,
+    "animations": 0,
+    "errors": 0,
+    "frame_checks": "{\"frame_counts\": [4, 2], \"displayed_chains\": 3, \"mean_count\": 3.0, \"fine_shape\": [320, 512], \"model_shape\": [160, 256], \"pathway\": \"non_md\"}"
+  },
+  "notebook_sha256": "c4a0d94049bfe7bcb304afeb689b4f4aff2b7ede40df4082c3127abbee647349",
+  "helper_sha256": {
+    "spiral_simulation_helpers.py": "4ff0f41b4075a6c60012fa1c1071acc3304fe62cb0517df3ce42d1b17d8611fa",
+    "spiral_learning_helpers.py": "1b253bcb5cde0645d3ece9a454d8323358ab21a3201a07d7296758333c3cab1d"
+  },
+  "pep8": {
+    "max_line_length": 79,
+    "result": "passed",
+    "checker": "pycodestyle",
+    "compatibility_ignores": [
+      "E203",
+      "W503"
+    ]
+  },
+  "original_roi_validation": {
+    "fields": 40,
+    "reference_molecules": 76,
+    "covered_molecules": 73,
+    "mean_charged_frame_saving": 0.5039403554438154
+  },
+  "original_scan55": {
+    "reference_molecules": 3,
+    "covered_molecules": 3,
+    "boxes": 3,
+    "charged_frame_saving": 0.6859211233539372
+  },
+  "live_gpu_inference": {
+    "python": "3.10.20 | packaged by conda-forge | (main, Mar  5 2026, 16:36:49) [MSC v.1944 64 bit (AMD64)]",
+    "torch": "2.11.0+cu128",
+    "device": "NVIDIA RTX PRO 4000 Blackwell Generation Laptop GPU",
+    "records": [
+      {
+        "kind": "diffusion",
+        "seconds": 8.39100000000326,
+        "metrics": {
+          "frame": "REL00055",
+          "boxes": 3,
+          "survey_fraction": 0.04219295888202096,
+          "second_pass_fraction": 0.2736999462510078,
+          "frame_saved": 0.6841070948669713,
+          "reference_molecules": 3,
+          "molecules_scanned": 3,
+          "minimum_coverage": 0.9850107066381156,
+          "full_frame_fallback": false,
+          "dice": 0.6388185654008439,
+          "iou": 0.46931184128952264
+        },
+        "probability_rmse": 0.001524657714452734,
+        "draw_pixel_agreement": 0.9999628067016602
+      },
+      {
+        "kind": "regression",
+        "seconds": 0.046999999991385266,
+        "metrics": {
+          "frame": "REL00055",
+          "boxes": 3,
+          "survey_fraction": 0.04219295888202096,
+          "second_pass_fraction": 0.28418099973125505,
+          "frame_saved": 0.6736260413867241,
+          "reference_molecules": 3,
+          "molecules_scanned": 3,
+          "minimum_coverage": 0.9850107066381156,
+          "full_frame_fallback": false,
+          "dice": 0.617317887296289,
+          "iou": 0.4464640727066174
+        },
+        "probability_rmse": 2.9526478101615794e-05
+      }
+    ]
+  },
+  "spm_loading": {
+    "python": "3.12.13",
+    "result": "passed",
+    "channel": "Height",
+    "shape": [
+      512,
+      512
+    ],
+    "native_nm_per_pixel": 1.136779296875,
+    "source": "common-assets/example-spm/20240513_rel_PJIP37_unknot_4ng_eph_ni__.0_00090.spm"
+  },
+  "limits": [
+    "Notebook execution is local Windows Python 3.12.13, not hosted Colab.",
+    "The Colab folder bundle was tested by copying all files into an isolated workspace.",
+    "The original 30,000/10,000-update training was not repeated; short runs tested both objectives and checkpoint saving.",
+    "Default reference predictions are the saved manuscript draws. Fresh live sampling can differ slightly with numerical settings; live GPU metrics are recorded separately."
+  ]
+}

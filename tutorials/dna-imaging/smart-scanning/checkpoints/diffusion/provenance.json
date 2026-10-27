@@ -1,0 +1,10 @@
+{
+  "relative_path": "tutorials/dna-imaging/smart-scanning/checkpoints/diffusion/manuscript_ema.pt",
+  "sha256": "592769a2ef93f9f65acac1df3d2704a4efe53a5032696a7e5e7fcabf6354f78f",
+  "source_sha256": "4000644025d8520ef9d372d663ce68ff7e712662fb18fe5ab3ddb4e6781f8baa",
+  "source": "outputs/DNA_spiral_diffusion/models/faithful/diffusion_best.pt",
+  "parameters": 11965058,
+  "selected_step": 23000,
+  "val_loss": 0.032867964978019394,
+  "note": "Original EMA tensors unchanged. Training/optimizer copies omitted from inference bundle."
+}

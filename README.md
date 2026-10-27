@@ -87,11 +87,14 @@ The workflow includes:
 * Deeplay U-Net training for DNA segmentation and crossing prediction;
 * validation and optional real-test evaluation.
 
-Main notebook:
+DNA imaging notebooks:
 
 * [**Simulation and segmentation of DNA imaged by AFM**](tutorials/dna-imaging/segmentation/DNA_simulation_and_segmentation.ipynb)
   (helper scripts, trained checkpoints and TopoStats presets in the same folder; see its
   [README](tutorials/dna-imaging/segmentation/README.md))
+* [**Smart microscopy with a spiral survey**](tutorials/dna-imaging/smart-scanning/notebooks/DNA_simulation_and_spiral_scanning.ipynb)
+  (MD/non-MD frames, diffusion or deterministic U-Net, training and real-data scan planning;
+  see its [README](tutorials/dna-imaging/smart-scanning/README.md))
 
 ## AFM data quality control
 
@@ -145,10 +148,19 @@ ASAP/
 │   │   │   ├── checkpoints/        (MD / non-MD × Res-U-Net / simple U-Net)
 │   │   │   ├── configs/            (TopoStats presets)
 │   │   │   └── README.md
+│   │   ├── smart-scanning/
+│   │   │   ├── notebooks/DNA_simulation_and_spiral_scanning.ipynb
+│   │   │   ├── spiral_simulation_helpers.py
+│   │   │   ├── spiral_learning_helpers.py
+│   │   │   ├── checkpoints/        (diffusion / regression)
+│   │   │   ├── assets/             (original reference fields and predictions)
+│   │   │   ├── setup_spiral.py
+│   │   │   └── README.md
 │   │   └── common-assets/
 │   │       ├── noise/              (blank .spm scan, PSD noise model)
 │   │       ├── example-images/
 │   │       ├── example-spm/
+│   │       ├── example-frames/     (native filtered relaxed Scan 55)
 │   │       └── real-test-data/     (image_N.npy/png, mask_N.npy/png)
 │   │
 │   ├── quality-control/

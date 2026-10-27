@@ -1,0 +1,11 @@
+{
+  "source_blank": "20240411_blank_water.0_00000.spm",
+  "original_asset": "outputs/DNA_1000_generation_v2/assets/blank_noise_asset.npz",
+  "sha256": "6cb2a69c2db70b7d77bc07c50fe4d53ed50c59b4b628f11e67feaef7e9e0d7ec",
+  "texture_shape": [
+    512,
+    512
+  ],
+  "native_nm_per_pixel": 1.953125,
+  "description": "Unchanged processed blank used by the MD source scenes; used for physical-frequency Fourier noise synthesis."
+}

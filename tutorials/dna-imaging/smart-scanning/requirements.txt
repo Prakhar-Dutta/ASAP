@@ -1,0 +1,13 @@
+# DNA simulation and spiral smart scanning (Python 3.10-3.12).
+# Install OpenMM separately for MD: pip install openmm
+# On Colab, setup_spiral.py installs the CUDA plugin when MD is selected.
+numpy>=1.26,<2.3
+scipy>=1.11
+matplotlib>=3.8
+ipython>=8
+psutil>=5.9
+torch>=2.3
+deeptrack==2.0.1
+scikit-image>=0.22
+pandas>=2.0
+pyyaml>=6

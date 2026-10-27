@@ -8,6 +8,23 @@ real test data) is in [`common-assets/`](common-assets).
 | Folder | Notebook | Content |
 |---|---|---|
 | [`segmentation/`](segmentation) | [`DNA_simulation_and_segmentation.ipynb`](segmentation/DNA_simulation_and_segmentation.ipynb) | Simulate closed DNA molecules on a substrate as AFM height images, then train or load a U-Net that segments the DNA and its crossings in simulated and real data, including real `.spm` scans analysed with TopoStats. |
+| [`smart-scanning/`](smart-scanning) | [`DNA_simulation_and_spiral_scanning.ipynb`](smart-scanning/notebooks/DNA_simulation_and_spiral_scanning.ipynb) | Generate configurable multi-molecule MD/non-MD frames, train or load the manuscript diffusion/U-Net, and plan spiral-survey scan boxes on simulated scans, Scan 55 or your own SPM/NPY file. |
+
+## Spiral smart microscopy
+
+The [spiral notebook](smart-scanning/notebooks/DNA_simulation_and_spiral_scanning.ipynb)
+has two parts. First, generate MD or non-MD frames with configurable molecule
+counts and square or rectangular fields. Then load the original manuscript
+diffusion or deterministic U-Net checkpoint, or optionally train a new model,
+and predict scan boxes on simulated fields, real Scan 55 or your own SPM/NPY
+data. The diffusion rule uses all 16 unfiltered draws and occupancy of at
+least 2/16, with the experiment's spiral and validation-selected settings.
+
+The notebook is in `smart-scanning/notebooks/`, its two Python helpers and
+checkpoint folders are under `smart-scanning/`, and shared Scan 55 and noise
+assets are under `common-assets/`. Run its Colab cell 0 to download the bundle.
+See the [smart-scanning README](smart-scanning/README.md) for the execution
+order, data formats, provenance and validation.
 
 ---
 

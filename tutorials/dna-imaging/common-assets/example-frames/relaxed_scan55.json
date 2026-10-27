@@ -1,0 +1,18 @@
+{
+  "scan_id": "REL00055",
+  "source_file": "20240513_rel_PJIP37_unknot_4ng_eph_ni__.0_00055.topostats",
+  "source_sha256": "e7f8b6aad8ed731e1b2d28881f6f86f5634ce6d126ffcb728be61f72c64776ef",
+  "asset_sha256": "6915a946be6006a0605c54bf8ff264e0f7222c39b7786e3df7358e5aec591501",
+  "shape": [
+    512,
+    512
+  ],
+  "nm_per_pixel": 1.190185546875,
+  "frame_width_nm": 609.375,
+  "frame_height_nm": 609.375,
+  "height_units": "nm",
+  "image": "Whole native-grid TopoStats-filtered height image; no resizing or centre crop.",
+  "reference_labels": "Automatic TopoStats height-threshold grain proposals, not manual ground truth. Reserved for assessment, never model inputs.",
+  "reference_molecules": 3,
+  "source_experiment": "outputs/DNA_standard_topostats/runs/topostats_only/spm_relaxed_mixed"
+}

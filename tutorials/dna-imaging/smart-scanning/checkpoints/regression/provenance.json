@@ -1,0 +1,10 @@
+{
+  "relative_path": "tutorials/dna-imaging/smart-scanning/checkpoints/regression/manuscript_ema.pt",
+  "sha256": "23a03c6e7a038a46fba80b5ee57161b1f5f3930f0437fb090d44f01857502c20",
+  "source_sha256": "27d3dd668eb165c5f0033ef641fcd8f07811df87a0337e8c40d38cfa2b8f3c27",
+  "source": "outputs/DNA_spiral_diffusion/models/faithful/regression_best.pt",
+  "parameters": 11965058,
+  "selected_step": 10000,
+  "val_loss": 0.07740941767891248,
+  "note": "Original EMA tensors unchanged. Training/optimizer copies omitted from inference bundle."
+}

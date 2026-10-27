@@ -1,0 +1,43 @@
+{
+  "model": {
+    "diffusion": {
+      "relative_path": "tutorials/dna-imaging/smart-scanning/checkpoints/diffusion/manuscript_ema.pt",
+      "sha256": "592769a2ef93f9f65acac1df3d2704a4efe53a5032696a7e5e7fcabf6354f78f",
+      "source_sha256": "4000644025d8520ef9d372d663ce68ff7e712662fb18fe5ab3ddb4e6781f8baa",
+      "source": "outputs/DNA_spiral_diffusion/models/faithful/diffusion_best.pt",
+      "parameters": 11965058,
+      "selected_step": 23000,
+      "val_loss": 0.032867964978019394,
+      "note": "Original EMA tensors unchanged. Training/optimizer copies omitted from inference bundle."
+    },
+    "regression": {
+      "relative_path": "tutorials/dna-imaging/smart-scanning/checkpoints/regression/manuscript_ema.pt",
+      "sha256": "23a03c6e7a038a46fba80b5ee57161b1f5f3930f0437fb090d44f01857502c20",
+      "source_sha256": "27d3dd668eb165c5f0033ef641fcd8f07811df87a0337e8c40d38cfa2b8f3c27",
+      "source": "outputs/DNA_spiral_diffusion/models/faithful/regression_best.pt",
+      "parameters": 11965058,
+      "selected_step": 10000,
+      "val_loss": 0.07740941767891248,
+      "note": "Original EMA tensors unchanged. Training/optimizer copies omitted from inference bundle."
+    }
+  },
+  "scan_boxes": {
+    "diffusion_map": {
+      "q": 2,
+      "margin": 0
+    },
+    "unet": {
+      "p": 0.05,
+      "margin": 0
+    }
+  },
+  "survey": {
+    "turns": 12,
+    "sample_spacing_nm": 5.0,
+    "radius_fraction": 0.495,
+    "phase": 0.0
+  },
+  "validation_loss_fields": 64,
+  "roi_validation_fields": 40,
+  "interpretation": "Occupancy uses all 16 unfiltered draws. Region selection uses only survey anchors and model predictions."
+}
