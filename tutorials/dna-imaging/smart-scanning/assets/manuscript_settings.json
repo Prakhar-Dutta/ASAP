@@ -29,6 +29,15 @@
     "unet": {
       "p": 0.05,
       "margin": 0
+    },
+    "dbscan": {
+      "eps": 90,
+      "min_samples": 1,
+      "margin": 40
+    },
+    "linear2d": {
+      "f": 1.25,
+      "margin": 40
     }
   },
   "survey": {
@@ -39,5 +48,6 @@
   },
   "validation_loss_fields": 64,
   "roi_validation_fields": 40,
-  "interpretation": "Occupancy uses all 16 unfiltered draws. Region selection uses only survey anchors and model predictions."
+  "interpretation": "Occupancy uses all 16 unfiltered draws. Region selection uses only survey anchors and model predictions.",
+  "scan_box_selection": "A_sim_val, faithful, outward_12, capped (v2)"
 }

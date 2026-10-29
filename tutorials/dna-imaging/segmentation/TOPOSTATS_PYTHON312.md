@@ -98,6 +98,16 @@ To install:
 python setup_topostats.py
 ```
 
+The spiral smart-scanning tutorial only needs `io.LoadScans` and
+`filters.Filters`. For that narrower workflow, `python setup_topostats.py
+--spm-only` builds `2.4.2+asap312.spm1` with dependencies limited to scan
+loading, calibration and filtering. TensorFlow/Keras, skan and topoly are
+not requested. The loader/filter source is unchanged; this profile does
+not provide the full processing pipeline or CLI. Use the default contour
+profile above for this segmentation notebook. The two profiles occupy
+the same `topostats` package, so use separate environments when switching
+between their dependency sets.
+
 Section 0 does this automatically in Colab/Kaggle. Use a fresh session;
 restart once if installation changes numerical libraries already imported.
 The profile is intentionally pinned: a future TopoStats release needs a new

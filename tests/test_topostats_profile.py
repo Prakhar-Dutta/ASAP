@@ -31,6 +31,32 @@ import unet_segmentation_helpers as seg
 
 class ProfileWheelTests(unittest.TestCase):
     @unittest.skipUnless(os.environ.get('ASAP_TOPOSTATS_UPSTREAM_WHEEL'), 'Set upstream wheel path')
+    def test_spm_profile_omits_unneeded_runtime_dependencies(self):
+        upstream = Path(os.environ['ASAP_TOPOSTATS_UPSTREAM_WHEEL'])
+        with tempfile.TemporaryDirectory() as directory:
+            wheel = setup.build_contour_wheel(upstream, Path(directory), spm_only=True)
+            with zipfile.ZipFile(wheel) as archive:
+                info = f'topostats-{setup.SPM_PROFILE_VERSION}.dist-info'
+                metadata = BytesParser().parsebytes(archive.read(info + '/METADATA'))
+                requirements = set(metadata.get_all('Requires-Dist'))
+                self.assertEqual(requirements, setup.SPM_DEPENDENCIES | {'packaging'})
+                self.assertTrue({'topoly', 'tensorflow', 'keras', 'skan'}.isdisjoint(requirements))
+                self.assertIn('3.12.13', SpecifierSet(metadata['Requires-Python']))
+                self.assertNotIn(info + '/entry_points.txt', archive.namelist())
+                receipt = json.loads(archive.read('topostats/asap_profile.json'))
+                self.assertEqual(receipt['supported_apis'],
+                                 ['topostats.io.LoadScans', 'topostats.filters.Filters'])
+                with zipfile.ZipFile(upstream) as original:
+                    for name in ('topostats/io.py', 'topostats/filters.py'):
+                        self.assertEqual(archive.read(name), original.read(name))
+                for name, encoded, size in csv.reader(io.StringIO(archive.read(info + '/RECORD').decode())):
+                    if encoded:
+                        data = archive.read(name)
+                        digest = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b'=').decode()
+                        self.assertEqual(encoded, 'sha256=' + digest)
+                        self.assertEqual(int(size), len(data))
+
+    @unittest.skipUnless(os.environ.get('ASAP_TOPOSTATS_UPSTREAM_WHEEL'), 'Set upstream wheel path')
     def test_profile_changes_only_audited_source_and_has_valid_record(self):
         upstream = Path(os.environ['ASAP_TOPOSTATS_UPSTREAM_WHEEL'])
         with tempfile.TemporaryDirectory() as directory:

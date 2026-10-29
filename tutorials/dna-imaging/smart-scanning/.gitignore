@@ -3,3 +3,4 @@ spiral_dataset*/
 *.download
 checkpoints/user_runs/
 *.log
+.topostats-build/

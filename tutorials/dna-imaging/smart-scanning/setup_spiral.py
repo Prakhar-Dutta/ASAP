@@ -159,11 +159,14 @@ def main():
                 [
                     sys.executable,
                     str(folder.parent / "segmentation/setup_topostats.py"),
+                    "--spm-only",
+                    "--cache-dir",
+                    str(folder / ".topostats-build"),
                 ],
                 check=True,
             )
     (folder / "notebooks").mkdir(exist_ok=True)
-    print(f"Tutorial ready at {folder}")
+    print(f"Tutorial ready at {folder}", flush=True)
 
 
 if __name__ == "__main__":

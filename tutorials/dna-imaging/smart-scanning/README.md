@@ -40,19 +40,29 @@ On Colab, select a GPU for MD or live neural inference, then run **cell 0**.
 It downloads individual files without cloning the repository: both original
 EMA checkpoints (about 48 MB each), 17 MB of reference fields, training curves,
 helpers and shared assets. Downloads are cached. The setup also installs
-OpenMM and the existing Python 3.12 TopoStats profile when selected.
+OpenMM and the Python 3.12 **SPM-only TopoStats profile** when selected.
+The setup script is refreshed each run so an older cached installer is replaced.
 
 Local setup:
 
 ```bash
 pip install -r requirements.txt
 pip install openmm                              # MD only
-python ../segmentation/setup_topostats.py       # your own SPM files
+python ../segmentation/setup_topostats.py --spm-only  # your own SPM files
 ```
 
 Then open the notebook from `notebooks/`. Use your existing Jupyter environment
 or install JupyterLab separately. Dependencies and execution are checked in
 Python 3.12.13 locally; the hosted Colab runtime is not used for validation.
+
+The spiral notebook only calls `topostats.io.LoadScans` and
+`topostats.filters.Filters`. The SPM-only profile reuses the segmentation
+tutorial's verified upstream wheel and Python compatibility changes, but
+installs only dependencies reached by those APIs. It omits TensorFlow/Keras,
+skan and topoly, and does not install the full TopoStats command-line tool.
+It leaves scan reading, calibration and filtering code unchanged. The regular
+segmentation installer without `--spm-only` still builds its full contour
+profile. Bundled Scan 55 and NPY inputs need no TopoStats installation.
 
 | Goal | Sections |
 |---|---|
@@ -143,6 +153,10 @@ checksum and matching observations, frame and sampler settings. Disable
 observations and uploaded files run the network directly; live diffusion is
 batched to limit memory.
 
+The simulated prediction preview shows three panels: acquired DNA anchors,
+DNA occupancy likelihood (U-Net probability in regression mode), and the
+second-pass boxes. Individual generated configurations are not displayed.
+
 ## Real Scan 55 and user data
 
 The canonical shared Scan 55 is in
@@ -159,6 +173,22 @@ configurable. A frame-size mismatch triggers the requested resize and warning
 that performance may be sub-optimal. Original extents are retained for mapping
 boxes back to source coordinates. Unknown NPY calibration is reported.
 Without reference masks, Dice/IoU and molecular coverage are not scored.
+
+Real-data analysis compares the learned plan with DBSCAN and true 2-D linear
+interpolation on the same survey. Defaults are frozen from the manuscript's
+`A_sim_val`, faithful `outward_12`, capped selection. DBSCAN uses a 90-nm
+neighbourhood, one minimum sample and a 40-nm box margin. Interpolation uses
+all measured heights, fills outside their convex hull with the measured
+median, thresholds at 1.25 times the anchor-height threshold and adds a 40-nm
+margin to each connected region. Controls are exposed in cell 8. Neither
+baseline uses hidden heights or reference labels to choose boxes.
+
+The figure shows anchors, likelihood, learned/DBSCAN/interpolation boxes and
+a three-method savings chart. All plans share survey cost, overlap charging,
+nested-box removal and full-frame fallback. Coverage counts are displayed
+when references exist; smaller boxes may miss molecules. Negative savings
+are retained and mean the survey plus second pass costs more area than one
+full-frame scan. This comparison estimates acquired area, not hardware time.
 
 ## Validation
 

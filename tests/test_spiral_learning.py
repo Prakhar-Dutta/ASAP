@@ -69,6 +69,57 @@ class SpiralLearningTests(unittest.TestCase):
         self.assertFalse(np.array_equal(first["cond"], second["cond"]))
         np.testing.assert_array_equal(first["cond"], repeated["cond"])
 
+    def test_baselines_reproduce_original_validation_selection(self):
+        records = {"DBSCAN": [], "Linear interpolation": []}
+        for i in range(len(self.dataset)):
+            case = self.dataset.case(i)
+            for name, plan in learn.baseline_scan_boxes(case).items():
+                records[name].append(learn.assess_plan(case, plan))
+        for name, covered, saved in [("DBSCAN", 67, .2407528958901751),
+                                      ("Linear interpolation", 74, -.006491152955066692)]:
+            with self.subTest(method=name):
+                self.assertEqual(sum(r["molecules_scanned"] for r in records[name]), covered)
+                self.assertAlmostEqual(np.mean([r["frame_saved"] for r in records[name]]), saved, places=12)
+
+    def test_baselines_use_only_acquired_heights_and_handle_sparse_surveys(self):
+        case = self.dataset.case(0)
+        baseline = learn.baseline_scan_boxes(case)
+        modified = dict(case, reference_height_nm=np.zeros_like(case["reference_height_nm"]),
+                        labels_fine=np.zeros_like(case["labels_fine"]), cond=case["cond"].copy())
+        modified["cond"][0, ~case["observed"]] = 999
+        repeated = learn.baseline_scan_boxes(modified)
+        for method in baseline:
+            self.assertEqual(baseline[method]["boxes"], repeated[method]["boxes"])
+        sparse = dict(case, observed=np.zeros_like(case["observed"]), cond=case["cond"].copy())
+        self.assertTrue(all(not p["boxes"] for p in learn.baseline_scan_boxes(sparse).values()))
+        oy, ox = sparse["offset"]
+        sparse["observed"][oy + 2, ox + 2:ox + 5] = True
+        sparse["cond"][0, oy + 2, ox + 2:ox + 5] = 0
+        plans = learn.baseline_scan_boxes(sparse)
+        self.assertEqual(len(plans["DBSCAN"]["boxes"]), 1)
+
+    def test_prediction_and_comparison_figures_have_requested_panels(self):
+        import matplotlib.pyplot as plt
+        case = self.dataset.case(0)
+        prediction = learn.predict_case(self.model, case, self.config, checkpoint=self.checkpoint)
+        plan = learn.scan_boxes(prediction, case)
+        plans, records = learn.compare_scan_methods(case, prediction, plan)
+        with patch.object(plt, "show"):
+            preview = learn.plot_prediction(case, prediction, plan)
+            comparison = learn.plot_real_comparison(case, prediction, plans, records)
+        self.assertEqual(len([ax for ax in preview.axes if ax.images]), 3)
+        titles = [ax.get_title() for ax in comparison.axes]
+        self.assertIn("DBSCAN second-pass boxes", titles)
+        self.assertIn("Linear interpolation second-pass boxes", titles)
+        self.assertIn("Charged scan-area saving", titles)
+        self.assertFalse(any("Generated configuration" in ax.get_title()
+                             for fig in (preview, comparison) for ax in fig.axes))
+        self.assertEqual([r["method"] for r in records],
+                         ["Diffusion", "DBSCAN", "Linear interpolation"])
+        self.assertEqual(len({r["survey_fraction"] for r in records}), 1)
+        plt.close(preview)
+        plt.close(comparison)
+
     def test_changed_sampling_settings_do_not_reuse_reference_cache(self):
         case = self.dataset.case(0)
         for config, seed in [(self.config, 123), (dict(self.config, rho=8), 900001)]:

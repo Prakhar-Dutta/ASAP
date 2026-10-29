@@ -21,6 +21,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage as ndi
+from scipy.interpolate import LinearNDInterpolator
+from scipy.spatial import QhullError
 from skimage.filters import threshold_otsu
 import torch
 
@@ -876,19 +878,8 @@ def _drop_nested(boxes):
     return keep
 
 
-def scan_boxes(
-    prediction,
-    case,
-    occupancy_threshold=2 / 16,
-    regression_threshold=0.05,
-    margin_nm=0.0,
-):
-    """Threshold predictions, join survey anchors and enclose anchored regions.
-
-    This is the manuscript's diffusion_map rule, not the earlier
-    component-association or filtered-draw rule. A box plan exceeding the
-    frame area falls back to a full second pass; survey cost is still charged.
-    """
+def survey_anchors(case):
+    """Identify DNA anchors from acquired heights alone, in physical nm."""
     measured_nm = (case["cond"][0] + 1) * 2.5
     values = measured_nm[case["observed"]]
     threshold = (
@@ -896,7 +887,46 @@ def scan_boxes(
         if values.size > 1 and np.ptp(values) > 0
         else 0.5
     )
-    anchors = case["observed"] & (measured_nm >= threshold)
+    anchors = case["observed"] & case["frame"] & (measured_nm >= threshold)
+    return anchors, threshold
+
+
+def _box_plan(boxes, case, anchors, margin_nm=0.0, **details):
+    """Apply physical margins, clipping, nesting and the common area cap."""
+    oy, ox = case["offset"]
+    my, mx = case["frame_shape"]
+    margin = int(np.ceil(margin_nm / case["pixel_nm"]))
+    boxes = _drop_nested(
+        [
+            (
+                max(oy, y0 - margin),
+                min(oy + my, y1 + margin),
+                max(ox, x0 - margin),
+                min(ox + mx, x1 + margin),
+            )
+            for y0, y1, x0, x1 in boxes
+        ]
+    )
+    area = sum((y1 - y0) * (x1 - x0) for y0, y1, x0, x1 in boxes)
+    fallback = area > my * mx
+    if fallback:
+        boxes = [(oy, oy + my, ox, ox + mx)]
+    return dict(boxes=boxes, anchors=anchors, fallback=fallback, **details)
+
+
+def scan_boxes(
+    prediction,
+    case,
+    occupancy_threshold=2 / 16,
+    regression_threshold=0.05,
+    margin_nm=0.0,
+):
+    """Enclose anchored regions using the manuscript's diffusion_map rule.
+
+    All draws contribute to occupancy. A plan exceeding the frame area uses
+    a full second pass; the observed survey cost is still charged.
+    """
+    anchors, _ = survey_anchors(case)
     cutoff = (
         occupancy_threshold
         if prediction["mode"] == "diffusion"
@@ -906,9 +936,6 @@ def scan_boxes(
         "frame"
     ]
     components, _ = ndi.label(selected, np.ones((3, 3), bool))
-    oy, ox = case["offset"]
-    my, mx = case["frame_shape"]
-    margin = int(np.ceil(margin_nm / case["pixel_nm"]))
     boxes = []
     for label in np.unique(components[anchors]):
         if label == 0:
@@ -916,20 +943,104 @@ def scan_boxes(
         rows, cols = np.nonzero(components == label)
         boxes.append(
             (
-                max(oy, int(rows.min()) - margin),
-                min(oy + my, int(rows.max()) + 1 + margin),
-                max(ox, int(cols.min()) - margin),
-                min(ox + mx, int(cols.max()) + 1 + margin),
+                int(rows.min()),
+                int(rows.max()) + 1,
+                int(cols.min()),
+                int(cols.max()) + 1,
             )
         )
-    boxes = _drop_nested(boxes)
-    area = sum((y1 - y0) * (x1 - x0) for y0, y1, x0, x1 in boxes)
-    fallback = area > my * mx
-    if fallback:
-        boxes = [(oy, oy + my, ox, ox + mx)]
-    return dict(
-        boxes=boxes, anchors=anchors, threshold=cutoff, fallback=fallback
+    return _box_plan(boxes, case, anchors, margin_nm, threshold=cutoff)
+
+
+def baseline_scan_boxes(
+    case,
+    dbscan_eps_nm=90.0,
+    dbscan_min_samples=1,
+    dbscan_margin_nm=40.0,
+    linear_threshold_factor=1.25,
+    linear_margin_nm=40.0,
+):
+    """Build the two manuscript baselines from the same acquired survey.
+
+    Defaults were selected on A_sim_val, faithful outward_12, capped view.
+    DBSCAN boxes enclose measured DNA clusters. Linear interpolation uses
+    every acquired height and encloses eight-connected thresholded regions,
+    independently of DBSCAN. Neither method reads reference heights/labels.
+    """
+    from sklearn.cluster import DBSCAN
+
+    anchors, threshold = survey_anchors(case)
+    points = np.column_stack(np.nonzero(anchors))
+    boxes = []
+    if len(points):
+        labels = DBSCAN(
+            eps=dbscan_eps_nm / case["pixel_nm"],
+            min_samples=dbscan_min_samples,
+        ).fit_predict(points)
+        for label in sorted(set(labels) - {-1}):
+            group = points[labels == label]
+            y0, x0 = group.min(axis=0)
+            y1, x1 = group.max(axis=0) + 1
+            boxes.append(tuple(map(int, (y0, y1, x0, x1))))
+    dbscan_plan = _box_plan(boxes, case, anchors, dbscan_margin_nm)
+
+    observed = case["observed"] & case["frame"]
+    measured = (case["cond"][0] + 1) * 2.5
+    samples = np.column_stack(np.nonzero(observed))
+    values = measured[observed]
+    fill = float(np.median(values)) if len(values) else 0.0
+    interpolated = np.full(observed.shape, fill, dtype=float)
+    if len(samples) >= 3:
+        try:
+            interpolated = LinearNDInterpolator(
+                samples, values, fill_value=fill
+            )(*np.indices(observed.shape))
+        except QhullError:
+            # Collinear/insufficient samples cannot define a 2-D triangulation.
+            pass
+    interpolated[observed] = values
+    interpolated = np.where(case["frame"], interpolated, 0.0)
+    components, _ = ndi.label(
+        (interpolated >= linear_threshold_factor * threshold) & case["frame"],
+        np.ones((3, 3), bool),
     )
+    boxes = [
+        (s[0].start, s[0].stop, s[1].start, s[1].stop)
+        for s in ndi.find_objects(components)
+        if s is not None
+    ]
+    linear_plan = _box_plan(
+        boxes,
+        case,
+        anchors,
+        linear_margin_nm,
+        interpolated_height_nm=interpolated,
+    )
+    return {"DBSCAN": dbscan_plan, "Linear interpolation": linear_plan}
+
+
+def compare_scan_methods(case, prediction, model_plan, **baseline_settings):
+    """Score three plans with identical survey and charged-area accounting."""
+    name = "Diffusion" if prediction["mode"] == "diffusion" else "U-Net"
+    plans = {
+        name: model_plan,
+        **baseline_scan_boxes(case, **baseline_settings),
+    }
+    records = []
+    for method, plan in plans.items():
+        record = assess_plan(case, plan)
+        records.append(dict(method=method, **record))
+    return plans, records
+
+
+def show_method_comparison(records):
+    """Display one row per method without pooling coverage across methods."""
+    import pandas as pd
+    from IPython.display import display
+
+    table = pd.DataFrame(records)
+    display(table)
+    return table
 
 
 def assess_plan(case, plan, probability=None):
@@ -1037,88 +1148,160 @@ def show_metrics(records):
     return table
 
 
-def plot_prediction(case, prediction, plan, title=None):
-    """Show survey, occupancy, scan boxes and individual generated masks."""
+def _scan_panel(ax, case, array, title, cmap="afmhot", vmax=5):
+    """Draw one calibrated scan panel with a scale bar."""
+    pixel = case["pixel_nm"]
+    extent = (0, array.shape[1] * pixel, 0, array.shape[0] * pixel)
+    colours = plt.get_cmap(cmap).with_extremes(bad="#d9d9d9")
+    shown = ax.imshow(
+        array, origin="lower", extent=extent, cmap=colours, vmin=0, vmax=vmax
+    )
+    ax.set(title=title, xlabel="x (nm)", ylabel="y (nm)")
+    ax.title.set_fontsize(11)
+    bar = min(100, extent[1] / 4)
+    colour = "black" if cmap == "gray" else "white"
+    ax.plot(
+        [0.06 * extent[1], 0.06 * extent[1] + bar],
+        [0.07 * extent[3]] * 2,
+        color=colour,
+        lw=3,
+    )
+    ax.text(
+        0.06 * extent[1],
+        0.10 * extent[3],
+        f"{bar:g} nm",
+        color=colour,
+        fontsize=8,
+    )
+    return shown
+
+
+def _draw_scan_boxes(ax, plan, pixel, colour="#35d8ca"):
+    """Overlay second-pass rectangles in physical coordinates."""
     from matplotlib.patches import Rectangle
 
-    pixel = case["pixel_nm"]
-    height = np.where(case["frame"], case["reference_height_nm"], np.nan)
-    measured = np.where(case["observed"], (case["cond"][0] + 1) * 2.5, np.nan)
-    extent = (0, height.shape[1] * pixel, 0, height.shape[0] * pixel)
-    draws = prediction.get("draws")
-    rows = 2 if draws is not None else 1
-    fig, axes = plt.subplots(rows, 4, figsize=(15, 3.75 * rows), squeeze=False)
-    panels = [
-        (height, "afmhot", "Reference height"),
-        (measured, "afmhot", "Spiral survey (measured pixels)"),
-        (
-            prediction["probability"],
-            "magma",
-            (
-                "DNA occupancy"
-                if prediction["mode"] == "diffusion"
-                else "DNA probability"
-            ),
-        ),
-        (height, "afmhot", "Selected second-pass boxes"),
-    ]
-    if draws is not None:
-        for i in range(4):
-            panels.append(
-                (
-                    draws[i % len(draws)],
-                    "gray",
-                    f"Generated configuration {i % len(draws) + 1}",
-                )
-            )
-    for ax, (array, cmap, name) in zip(axes.flat, panels):
-        colours = plt.get_cmap(cmap).copy()
-        colours.set_bad("#d9d9d9")
-        shown = ax.imshow(
-            array,
-            origin="lower",
-            extent=extent,
-            cmap=colours,
-            vmin=0,
-            vmax=5 if cmap == "afmhot" else 1,
-        )
-        ax.set_title(name, fontsize=10)
-        ax.set_xlabel("x (nm)")
-        ax.set_ylabel("y (nm)")
-        bar = min(100, extent[1] / 4)
-        scale_colour = "black" if name.startswith("Spiral") else "white"
-        ax.plot(
-            [0.06 * extent[1], 0.06 * extent[1] + bar],
-            [0.07 * extent[3]] * 2,
-            color=scale_colour,
-            lw=3,
-        )
-        ax.text(
-            0.06 * extent[1],
-            0.10 * extent[3],
-            f"{bar:g} nm",
-            color=scale_colour,
-            fontsize=8,
-        )
-    fig.colorbar(
-        axes[0, 2].images[0],
-        ax=axes[0, 2],
-        fraction=0.046,
-        label="DNA occupancy" if draws is not None else "DNA probability",
-    )
     for y0, y1, x0, x1 in plan["boxes"]:
-        axes[0, 3].add_patch(
+        ax.add_patch(
             Rectangle(
                 (x0 * pixel, y0 * pixel),
                 (x1 - x0) * pixel,
                 (y1 - y0) * pixel,
                 fill=False,
-                edgecolor="#35d8ca",
-                linewidth=1.5,
+                edgecolor=colour,
+                linewidth=1.7,
             )
         )
+
+
+def _anchor_panel(ax, case, anchors):
+    """Overlay only acquired DNA anchor pixels on the survey mask."""
+    _scan_panel(
+        ax,
+        case,
+        np.where(case["frame"], case["observed"], np.nan),
+        "Measured DNA anchor pixels",
+        "gray",
+        1,
+    )
+    y, x = np.nonzero(anchors)
+    ax.scatter(
+        (x + 0.5) * case["pixel_nm"],
+        (y + 0.5) * case["pixel_nm"],
+        s=5,
+        c="#00a66c",
+        marker="s",
+        linewidths=0,
+    )
+
+
+def _occupancy_panel(fig, ax, case, prediction):
+    """Show an ensemble occupancy or deterministic probability, with units."""
+    label = (
+        "DNA occupancy likelihood"
+        if prediction["mode"] == "diffusion"
+        else "DNA probability (U-Net)"
+    )
+    shown = _scan_panel(
+        ax,
+        case,
+        np.where(case["frame"], prediction["probability"], np.nan),
+        label,
+        "magma",
+        1,
+    )
+    fig.colorbar(
+        shown,
+        ax=ax,
+        fraction=0.046,
+        label=(
+            f"Fraction of {len(prediction['draws'])} draws"
+            if prediction["mode"] == "diffusion"
+            else "DNA probability"
+        ),
+    )
+
+
+def plot_prediction(case, prediction, plan, title=None):
+    """Show anchor pixels, DNA likelihood and the selected second pass."""
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5), layout="constrained")
+    _anchor_panel(axes[0], case, plan["anchors"])
+    _occupancy_panel(fig, axes[1], case, prediction)
+    height = np.where(case["frame"], case["reference_height_nm"], np.nan)
+    _scan_panel(axes[2], case, height, "Selected second-pass boxes")
+    _draw_scan_boxes(axes[2], plan, case["pixel_nm"])
     fig.suptitle((title or case["name"]) + " | " + prediction["source"])
-    fig.tight_layout()
+    plt.show()
+    return fig
+
+
+def plot_real_comparison(case, prediction, plans, records, title=None):
+    """Compare learned, DBSCAN and linear plans on exactly the same survey."""
+    fig, axes = plt.subplots(2, 3, figsize=(16, 9), layout="constrained")
+    model_name = next(iter(plans))
+    colours = ["#2495d0", "#00976b", "#b86e00"]
+    _anchor_panel(axes[0, 0], case, plans[model_name]["anchors"])
+    _occupancy_panel(fig, axes[0, 1], case, prediction)
+    height = np.where(case["frame"], case["reference_height_nm"], np.nan)
+    _scan_panel(axes[0, 2], case, height, model_name + " second-pass boxes")
+    _draw_scan_boxes(
+        axes[0, 2], plans[model_name], case["pixel_nm"], colours[0]
+    )
+    measured = np.where(case["observed"], (case["cond"][0] + 1) * 2.5, np.nan)
+    _scan_panel(axes[1, 0], case, measured, "DBSCAN second-pass boxes", "gray")
+    _draw_scan_boxes(axes[1, 0], plans["DBSCAN"], case["pixel_nm"], colours[1])
+    linear = plans["Linear interpolation"]
+    _scan_panel(
+        axes[1, 1],
+        case,
+        np.where(case["frame"], linear["interpolated_height_nm"], np.nan),
+        "Linear interpolation second-pass boxes",
+    )
+    _draw_scan_boxes(axes[1, 1], linear, case["pixel_nm"], colours[2])
+    ax = axes[1, 2]
+    savings = [100 * r["frame_saved"] for r in records]
+    bars = ax.bar([r["method"] for r in records], savings, color=colours)
+    ax.axhline(0, color="#444444", linewidth=0.8)
+    labels = []
+    for r, saving in zip(records, savings):
+        covered = (
+            f"\n{r['molecules_scanned']}/{r['reference_molecules']} covered"
+            if r["reference_molecules"]
+            else ""
+        )
+        labels.append(f"{saving:.1f}%" + covered)
+    ax.bar_label(bars, labels=labels, padding=5, fontsize=10)
+    ax.set(title="Charged scan-area saving", ylabel="Frame area saved (%)")
+    ax.margins(y=0.27)
+    ax.text(
+        0.02,
+        0.97,
+        "Survey + summed box areas charged; overlap counts",
+        transform=ax.transAxes,
+        va="top",
+        fontsize=8,
+    )
+    ax.tick_params(axis="x", labelsize=9)
+    fig.suptitle((title or case["name"]) + " | " + prediction["source"])
     plt.show()
     return fig
 

@@ -1,33 +1,121 @@
 {
-  "checked_date": "2026-10-27",
+  "checked_date": "2026-10-29",
   "regression_tests": {
-    "count": 30,
+    "count": 34,
     "result": "passed"
   },
   "main_notebook": {
     "python": "3.12.13 (main, Mar 24 2026, 22:57:53) [MSC v.1944 64 bit (AMD64)]",
     "mode": "md",
-    "elapsed_s": 87.53275860000576,
+    "elapsed_s": 199.9967672000057,
     "executed_code_cells": 17,
     "png_figures": 6,
     "animations": 1,
     "errors": 0,
-    "frame_checks": "{\"frame_counts\": [3, 1], \"displayed_chains\": 2, \"mean_count\": 2.0, \"fine_shape\": [512, 512], \"model_shape\": [256, 256], \"pathway\": \"md\"}"
+    "frame_checks": "{\"frame_counts\": [3, 1], \"displayed_chains\": 2, \"mean_count\": 2.0, \"fine_shape\": [512, 512], \"model_shape\": [256, 256], \"pathway\": \"md\"}",
+    "real_method_comparison": [
+      {
+        "method": "Diffusion",
+        "frame": "REL00055",
+        "boxes": 3,
+        "survey_fraction": 0.04219295888202096,
+        "second_pass_fraction": 0.2718859177640419,
+        "frame_saved": 0.6859211233539372,
+        "reference_molecules": 3,
+        "molecules_scanned": 3,
+        "minimum_coverage": 0.9850107066381156,
+        "full_frame_fallback": false,
+        "dice": null,
+        "iou": null
+      },
+      {
+        "method": "DBSCAN",
+        "frame": "REL00055",
+        "boxes": 3,
+        "survey_fraction": 0.04219295888202096,
+        "second_pass_fraction": 0.46865761891964525,
+        "frame_saved": 0.48914942219833385,
+        "reference_molecules": 3,
+        "molecules_scanned": 3,
+        "minimum_coverage": 1.0,
+        "full_frame_fallback": false,
+        "dice": null,
+        "iou": null
+      },
+      {
+        "method": "Linear interpolation",
+        "frame": "REL00055",
+        "boxes": 1,
+        "survey_fraction": 0.04219295888202096,
+        "second_pass_fraction": 1.0,
+        "frame_saved": -0.0421929588820209,
+        "reference_molecules": 3,
+        "molecules_scanned": 3,
+        "minimum_coverage": 1.0,
+        "full_frame_fallback": true,
+        "dice": null,
+        "iou": null
+      }
+    ]
   },
   "alternative_notebook": {
     "python": "3.12.13 (main, Mar 24 2026, 22:57:53) [MSC v.1944 64 bit (AMD64)]",
     "mode": "nonmd",
-    "elapsed_s": 11.678650899993954,
+    "elapsed_s": 46.1955067999952,
     "executed_code_cells": 17,
     "png_figures": 7,
     "animations": 0,
     "errors": 0,
-    "frame_checks": "{\"frame_counts\": [4, 2], \"displayed_chains\": 3, \"mean_count\": 3.0, \"fine_shape\": [320, 512], \"model_shape\": [160, 256], \"pathway\": \"non_md\"}"
+    "frame_checks": "{\"frame_counts\": [4, 2], \"displayed_chains\": 3, \"mean_count\": 3.0, \"fine_shape\": [320, 512], \"model_shape\": [160, 256], \"pathway\": \"non_md\"}",
+    "real_method_comparison": [
+      {
+        "method": "U-Net",
+        "frame": "REL00055",
+        "boxes": 3,
+        "survey_fraction": 0.04219295888202096,
+        "second_pass_fraction": 0.28418099973125505,
+        "frame_saved": 0.6736260413867241,
+        "reference_molecules": 3,
+        "molecules_scanned": 3,
+        "minimum_coverage": 0.9850107066381156,
+        "full_frame_fallback": false,
+        "dice": null,
+        "iou": null
+      },
+      {
+        "method": "DBSCAN",
+        "frame": "REL00055",
+        "boxes": 3,
+        "survey_fraction": 0.04219295888202096,
+        "second_pass_fraction": 0.46865761891964525,
+        "frame_saved": 0.48914942219833385,
+        "reference_molecules": 3,
+        "molecules_scanned": 3,
+        "minimum_coverage": 1.0,
+        "full_frame_fallback": false,
+        "dice": null,
+        "iou": null
+      },
+      {
+        "method": "Linear interpolation",
+        "frame": "REL00055",
+        "boxes": 1,
+        "survey_fraction": 0.04219295888202096,
+        "second_pass_fraction": 1.0,
+        "frame_saved": -0.0421929588820209,
+        "reference_molecules": 3,
+        "molecules_scanned": 3,
+        "minimum_coverage": 1.0,
+        "full_frame_fallback": true,
+        "dice": null,
+        "iou": null
+      }
+    ]
   },
-  "notebook_sha256": "c4a0d94049bfe7bcb304afeb689b4f4aff2b7ede40df4082c3127abbee647349",
+  "notebook_sha256": "3df4a47dc18562099890a21d1ae19be74bc3673a61a7a128781f325597b70949",
   "helper_sha256": {
     "spiral_simulation_helpers.py": "4ff0f41b4075a6c60012fa1c1071acc3304fe62cb0517df3ce42d1b17d8611fa",
-    "spiral_learning_helpers.py": "1b253bcb5cde0645d3ece9a454d8323358ab21a3201a07d7296758333c3cab1d"
+    "spiral_learning_helpers.py": "5524ad3c0c9d2407488d851bcd9ba98dc3e3cc84cbb956e5d74de3f8d74b3f9e"
   },
   "pep8": {
     "max_line_length": 79,
@@ -92,7 +180,8 @@
         },
         "probability_rmse": 2.9526478101615794e-05
       }
-    ]
+    ],
+    "checked_date": "2026-10-27"
   },
   "spm_loading": {
     "python": "3.12.13",
@@ -106,9 +195,54 @@
     "source": "common-assets/example-spm/20240513_rel_PJIP37_unknot_4ng_eph_ni__.0_00090.spm"
   },
   "limits": [
-    "Notebook execution is local Windows Python 3.12.13, not hosted Colab.",
+    "Notebook execution and fresh SPM-profile installation are local Windows Python 3.12.13, not hosted Colab.",
     "The Colab folder bundle was tested by copying all files into an isolated workspace.",
-    "The original 30,000/10,000-update training was not repeated; short runs tested both objectives and checkpoint saving.",
-    "Default reference predictions are the saved manuscript draws. Fresh live sampling can differ slightly with numerical settings; live GPU metrics are recorded separately."
-  ]
+    "The original 30,000/10,000-update training was not repeated; short tests cover both objectives and checkpoint saving.",
+    "Default reference predictions are saved manuscript draws. Live GPU results retained above were checked on 2026-10-27.",
+    "User supplied only exit status 1 for the failed Colab setup, not the underlying pip traceback; the new setup avoids resolving unused contour-pipeline dependencies and refreshes its cached installer."
+  ],
+  "installer_sha256": {
+    "setup_spiral.py": "f9f3a03a97d6c041fb84e9ff4ee412686aa7c2288456094dcddd8a3ee4b0bd8a",
+    "../segmentation/setup_topostats.py": "e5121a35bbabfef4c9628b0b5e949700537d9d6bae009072d9ebebd67ff105a5"
+  },
+  "baseline_roi_validation": {
+    "selection": "A_sim_val, faithful outward_12, capped v2",
+    "fields": 40,
+    "reference_molecules": 76,
+    "DBSCAN": {
+      "covered_molecules": 67,
+      "mean_charged_frame_saving": 0.2407528958901751
+    },
+    "Linear interpolation": {
+      "covered_molecules": 74,
+      "mean_charged_frame_saving": -0.006491152955066692
+    },
+    "result": "Matches original manuscript selected-case scores to 12 decimal places."
+  },
+  "spm_only_installation": {
+    "python": "3.12.13 (main, Mar 24 2026, 22:57:53) [MSC v.1944 64 bit (AMD64)]",
+    "version": "2.4.2+asap312.spm1",
+    "shape": [
+      512,
+      512
+    ],
+    "native_nm_per_pixel": 1.136779296875,
+    "finite": true,
+    "excluded_packages_absent": {
+      "tensorflow": true,
+      "keras": true,
+      "skan": true,
+      "topoly": true
+    },
+    "source_apis": [
+      "LoadScans",
+      "Filters"
+    ],
+    "environment": "Clean isolated Windows Python 3.12.13 venv",
+    "installation": "Fresh pip dependency resolution and installation passed.",
+    "pip_check": "No broken requirements found.",
+    "installer_cli": "Verified PyPI wheel download, rebuild and installation passed.",
+    "upstream_sha256": "813840fad6ef740b78e46a92c50cd16f86d308fe7307c24d70b10907918ab03c",
+    "loader_and_filter_source": "Byte-for-byte unchanged from upstream."
+  }
 }
